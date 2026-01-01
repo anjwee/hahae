@@ -1,0 +1,36 @@
+name: Build and Publish Docker Image
+
+# 触发条件：当你推送到 main 分支时自动运行
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # 允许写入 GitHub 镜像仓库
+
+    steps:
+      - name: Checkout repository (拉取代码)
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry (登录镜像仓库)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image (构建并推送镜像)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # 镜像标签：ghcr.io/你的用户名/仓库名:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
