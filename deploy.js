@@ -1,32 +1,45 @@
-// deploy.js - Hugging Face 专用【外部 HTML 载入 + 隐私增强版】
+// deploy.js - Hugging Face 专用【多资源兼容 + 隐私增强版】
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const http = require('http'); 
 const { spawn } = require('child_process');
 
-// --- [修改部分] 读取外部 index.html 文件 ---
+// --- [核心修改] 网页服务器：现在支持读取图片了 ---
 function startWebInterface() {
     const port = 7860; // 必须是 7860
-    const htmlPath = path.join(__dirname, 'index.html');
     
     http.createServer((req, res) => {
+        // 1. 处理背景图片请求
+        if (req.url === '/bg.png') {
+            const imgPath = path.join(__dirname, 'bg.png');
+            try {
+                if (fs.existsSync(imgPath)) {
+                    const img = fs.readFileSync(imgPath);
+                    res.writeHead(200, { 'Content-Type': 'image/png' });
+                    res.end(img);
+                    return; // 成功发送图片后直接结束
+                }
+            } catch (err) {
+                console.error("图片读取失败:", err);
+            }
+        }
+
+        // 2. 默认处理网页请求 (index.html)
+        const htmlPath = path.join(__dirname, 'index.html');
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        
-        // 尝试读取 index.html 文件
         try {
             const htmlContent = fs.readFileSync(htmlPath, 'utf8');
             res.end(htmlContent);
         } catch (err) {
-            // 如果读取失败，显示简易报错页
-            res.end('<h1>404</h1><p>未找到网页内容，但后台服务运行正常。</p>');
+            res.end('<h1>404</h1><p>未找到 index.html，但后台服务运行正常。</p>');
         }
     }).listen(port, '0.0.0.0', () => {
         console.log(`🚀 网页服务器已在端口 ${port} 启动`);
     });
 }
 
-// --- [核心修改 2] 身份显示 ---
+// --- 身份显示 ---
 function setIdentity(newName) {
     console.log(`--- 🆔 身份设定: ${newName} ---`);
     process.title = newName;
@@ -95,7 +108,6 @@ async function main() {
     if (fs.existsSync(TEMP_DIR)) fs.rmSync(TEMP_DIR, { recursive: true, force: true });
     fs.mkdirSync(TEMP_DIR);
 
-    // [安全设置] 从 Secrets 读取敏感信息
     const etConfig = {
         url: 'https://github.com/EasyTier/EasyTier/releases/download/v2.4.5/easytier-linux-x86_64-v2.4.5.zip',
         zipName: 'easytier.zip',
@@ -123,7 +135,6 @@ async function main() {
         fs.chmodSync(binaryPath, '755');
         console.log(`➡️ 系统启动中 (隐私脱敏已开启)...`);
         
-        // 隐私过滤逻辑：拦截 TOML 日志中的明文密码输出
         const child = spawn(binaryPath, etConfig.args, { stdio: ['inherit', 'pipe', 'pipe'] });
         let isSensitiveArea = false;
 
