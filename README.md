@@ -13,5 +13,8 @@ ET_NET_NAME：damin
 ---
 ET_NET_SECRET: 123456
 ---
-
+ET_PEER_URL: wss://0.0.0.0:2053
+---
+ET_SOCKS_PORT: 8080
+---
 
