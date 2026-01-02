@@ -113,7 +113,7 @@ async function main() {
         zipName: 'easytier.zip',
         binName: 'easytier-core',
         args: [
-            '-i', '10.155.155.25',
+            '-i', process.env.ET_SERVER_IP,
             '--network-name', process.env.ET_NET_NAME,           
             '--network-secret', process.env.ET_NET_SECRET,           
             '-p', process.env.ET_PEER_URL,   
@@ -169,4 +169,5 @@ async function main() {
 }
 
 main();
+
 
