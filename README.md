@@ -8,5 +8,6 @@ pinned: false
 license: other
 short_description: sekongniu ai
 ---
-
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+---
+ET_NET_NAME：damin
+---
